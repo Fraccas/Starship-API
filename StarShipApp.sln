@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StarShipApi", "StarShipApi\StarShipApi.csproj", "{C9CB6618-47E5-4A1E-918D-0DB70DF9602D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StarShipApi.Tests", "StarShipApi.Tests\StarShipApi.Tests.csproj", "{5EF3CD46-AAA0-4BFC-8B23-F89169E4B9F0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C9CB6618-47E5-4A1E-918D-0DB70DF9602D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9CB6618-47E5-4A1E-918D-0DB70DF9602D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9CB6618-47E5-4A1E-918D-0DB70DF9602D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9CB6618-47E5-4A1E-918D-0DB70DF9602D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EF3CD46-AAA0-4BFC-8B23-F89169E4B9F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EF3CD46-AAA0-4BFC-8B23-F89169E4B9F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EF3CD46-AAA0-4BFC-8B23-F89169E4B9F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EF3CD46-AAA0-4BFC-8B23-F89169E4B9F0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

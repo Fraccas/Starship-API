@@ -1,0 +1,6 @@
+@StarShipApi_HostAddress = http://localhost:5132
+
+GET {{StarShipApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
