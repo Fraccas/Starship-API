@@ -31,10 +31,6 @@ StarShipApi/
 │   ├── FavoriteStarship.cs
 │   └── ApplicationUser.cs (optional depending on setup)
 │
-├── Dtos/
-│   ├── LoginDto.cs
-│   ├── RegisterDto.cs
-│   └── FavoriteStarshipDto.cs
 │
 ├── Migrations/
 │
