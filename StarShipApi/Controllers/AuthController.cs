@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using StarShipApi.Models.Dto;
+using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -40,7 +42,28 @@ namespace StarShipApi.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto model)
         {
-            var user = new IdentityUser { UserName = model.Email, Email = model.Email };
+            // Check if email is empty
+            if (string.IsNullOrWhiteSpace(model.Email))
+                return BadRequest(new { message = "Email is required." });
+
+            // Validate email format
+            var emailAttribute = new EmailAddressAttribute();
+            if (!emailAttribute.IsValid(model.Email))
+                return BadRequest(new { message = "Invalid email format." });
+
+            // Check if email already exists
+            var existingUser = await _userManager.FindByEmailAsync(model.Email);
+            if (existingUser != null)
+                return BadRequest(new { message = "Email is already registered." });
+
+            // Create user object
+            var user = new IdentityUser
+            {
+                UserName = model.Email,
+                Email = model.Email
+            };
+
+            // Create user in Identity
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (!result.Succeeded)
@@ -48,8 +71,9 @@ namespace StarShipApi.Controllers
 
             await _userManager.AddToRoleAsync(user, "User");
 
-            return Ok("User registered successfully!");
+            return Ok(new { message = "User registered successfully!" });
         }
+
 
         // POST api/auth/login
         [HttpPost("login")]
@@ -88,6 +112,7 @@ namespace StarShipApi.Controllers
             foreach (var role in userRoles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
+                claims.Add(new Claim("role", role)); // ensure normalized role is sent
             }
 
             var token = new JwtSecurityToken(
@@ -126,7 +151,4 @@ namespace StarShipApi.Controllers
             return Ok("Admin seeded!");
         }
     }
-
-    public record RegisterDto(string Email, string Password);
-    public record LoginDto(string Email, string Password);
 }
