@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StarShipApi.Data;
 using StarShipApi.Models;
+using StarShipApi.Models.Dto;
 using System.Security.Claims;
 
 namespace StarShipApi.Controllers
@@ -41,17 +42,20 @@ namespace StarShipApi.Controllers
 
         // POST: api/favoritestarship
         [HttpPost]
-        public async Task<ActionResult<FavoriteStarship>> AddFavorite([FromBody] FavoriteStarship favorite)
+        public async Task<ActionResult<FavoriteStarship>> AddFavorite([FromBody] AddFavoriteDto dto)
         {
             string userId = GetCurrentUserId();
 
-            bool starshipExists = await _context.Starships.AnyAsync(s => s.Id == favorite.StarshipId);
+            bool starshipExists = await _context.Starships.AnyAsync(s => s.Id == dto.StarshipId);
             if (!starshipExists)
                 return BadRequest("StarshipId is invalid.");
 
-            favorite.Id = 0; // DB set ID upon insert
-            favorite.UserId = userId;
-            favorite.CreatedAt = DateTime.UtcNow;
+            var favorite = new FavoriteStarship
+            {
+                StarshipId = dto.StarshipId,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            };
 
             _context.FavoriteStarships.Add(favorite);
             await _context.SaveChangesAsync();
