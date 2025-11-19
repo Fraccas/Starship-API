@@ -23,6 +23,28 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+// enable https
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5233); // HTTP
+    options.ListenAnyIP(7233, listen => listen.UseHttps()); // HTTPS
+});
+
+// enable CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:4200")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
+
+
+
 // Controllers + Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -107,9 +129,12 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.MapControllers();
+app.UseCors("AllowAngular");
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseHttpsRedirection();
+
 
 // test endpoint to make sure it works
 app.MapGet("/test-swapi", async (ISwapiService swapi) =>
