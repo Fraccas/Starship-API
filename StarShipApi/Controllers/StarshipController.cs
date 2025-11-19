@@ -5,9 +5,7 @@ using StarShipApi.Data;
 
 namespace StarShipApi.Controllers
 {
-    // Can be overriden with this: [Route("api/starships")]
-    [Route("api/[controller]")] // route is controller name minus the word "Controller" ("api/Starship")
-    [Authorize(Roles = "Admin")]
+    [Route("api/[controller]")]
     [ApiController]
     public class StarshipController : ControllerBase
     {
@@ -18,37 +16,39 @@ namespace StarShipApi.Controllers
             _context = context;
         }
 
-        // GET: api/starship
-        // PUBLIC
+        // ------------------------------------------------------------
+        // GET: api/starship (PUBLIC)
+        // ------------------------------------------------------------
         [HttpGet]
-        [AllowAnonymous] // no auth needed
+        [AllowAnonymous]
         public async Task<ActionResult<List<Starship>>> GetStarships()
         {
-            List<Starship> ships = await _context.Starships.ToListAsync();
-            return Ok(ships);
+            return Ok(await _context.Starships.ToListAsync());
         }
 
-        // GET: api/starship/5
-        // PUBLIC
+        // ------------------------------------------------------------
+        // GET: api/starship/5 (PUBLIC)
+        // ------------------------------------------------------------
         [HttpGet("{id:int}")]
         [AllowAnonymous]
         public async Task<ActionResult<Starship>> GetStarship(int id)
         {
-            Starship? ship = await _context.Starships.FindAsync(id);
-
+            var ship = await _context.Starships.FindAsync(id);
             if (ship == null)
                 return NotFound();
 
             return Ok(ship);
         }
 
-        // POST: api/starship
-        // (Admin-only later)
+        // ------------------------------------------------------------
+        // POST: api/starship (ADMIN ONLY)
+        // ------------------------------------------------------------
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<Starship>> CreateStarship([FromBody] Starship starship)
         {
-            // defensive: ignore Id from client; creates its own ID
             starship.Id = 0;
+            starship.CreatedAt = DateTime.UtcNow;
 
             _context.Starships.Add(starship);
             await _context.SaveChangesAsync();
@@ -56,48 +56,40 @@ namespace StarShipApi.Controllers
             return CreatedAtAction(nameof(GetStarship), new { id = starship.Id }, starship);
         }
 
-        // PUT: api/starship/5
-        // (Admin-only later)
+        // ------------------------------------------------------------
+        // PUT: api/starship/5 (ADMIN ONLY)
+        // ------------------------------------------------------------
         [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateStarship(int id, [FromBody] Starship updated)
         {
-            if (id != updated.Id)
-                return BadRequest("ID in URL and body must match.");
-
-            bool exists = await _context.Starships.AnyAsync(s => s.Id == id);
-            if (!exists)
+            var existing = await _context.Starships.FindAsync(id);
+            if (existing == null)
                 return NotFound();
 
-            _context.Entry(updated).State = EntityState.Modified;
+            // Update only allowed fields
+            _context.Entry(existing).CurrentValues.SetValues(updated);
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!await _context.Starships.AnyAsync(s => s.Id == id))
-                    return NotFound();
+            await _context.SaveChangesAsync();
 
-                throw;
-            }
-
-            return NoContent();
+            return Ok(existing);
         }
 
-        // DELETE: api/starship/5
-        // (Admin-only later)
+        // ------------------------------------------------------------
+        // DELETE: api/starship/5 (ADMIN ONLY)
+        // ------------------------------------------------------------
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteStarship(int id)
         {
-            Starship? ship = await _context.Starships.FindAsync(id);
+            var ship = await _context.Starships.FindAsync(id);
             if (ship == null)
                 return NotFound();
 
             _context.Starships.Remove(ship);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Deleted" });
         }
     }
 }
