@@ -204,3 +204,47 @@ https://<your-site>.azurewebsites.net/starships
 
 Should return **seeded Starship data**, not `[]`.
 
+
+# 🧑‍🤝‍🧑 **11. Identity Roles Must Be Seeded in Production (One-Time Setup)**
+
+ASP.NET Core Identity does **not** automatically create roles when running on a fresh SQLite database in Azure App Service.
+
+Because the API depends on the `"User"` role during registration, you **must seed the required roles once** after deploying.
+
+### ✔ Run this URL **ONCE** after initial deployment:
+
+https://starshipapiapp01.azurewebsites.net/api/auth/seed-admin
+
+sql
+Copy code
+
+This endpoint will:
+
+- Create the **"Admin"** and **"User"** roles (if missing)
+- Create a default admin account:
+
+Email: admin@test.com
+Password: Password123!
+
+markdown
+Copy code
+
+- Ensure the database contains the necessary `AspNetRoles` entries so that:
+- **Register** works (HTTP 200)
+- **Login** works (HTTP 200)
+- **JWT authentication** works normally
+
+---
+
+### 🔥 Why this is required
+
+On **localhost**, Identity roles already existed in SQL Server LocalDB.  
+On **Azure**, the SQLite database starts empty and contains no roles, causing:
+
+| Endpoint                   | Azure Result | Reason                     |
+|---------------------------|--------------|----------------------------|
+| `POST /api/auth/register` | **500**      | `"User"` role missing      |
+| `POST /api/auth/login`    | **401**      | User creation previously failed |
+
+Running the `seed-admin` endpoint fixes this permanently.
+
