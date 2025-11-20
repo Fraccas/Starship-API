@@ -1,0 +1,45 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  ACR_NAME: starshipreg123
+  RESOURCE_GROUP: starship-rg
+  BACKEND_APP: starshipapiapp01
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: ACR Login
+      run: az acr login --name $ACR_NAME
+
+    - name: Build Backend Docker Image
+      run: docker build -t $ACR_NAME.azurecr.io/starshipapi:latest .
+
+    - name: Push Backend Image
+      run: docker push $ACR_NAME.azurecr.io/starshipapi:latest
+
+    - name: Deploy Backend
+      run: |
+        az webapp config container set \
+          --resource-group $RESOURCE_GROUP \
+          --name $BACKEND_APP \
+          --docker-custom-image-name $ACR_NAME.azurecr.io/starshipapi:latest \
+          --docker-registry-server-url https://$ACR_NAME.azurecr.io \
+          --docker-registry-server-user $ACR_NAME \
+          --docker-registry-server-password $(az acr credential show --name $ACR_NAME --query "passwords[0].value" -o tsv)
+
+    - name: Restart Backend
+      run: az webapp restart --resource-group $RESOURCE_GROUP --name $BACKEND_APP
