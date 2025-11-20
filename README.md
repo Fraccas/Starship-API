@@ -148,7 +148,7 @@ And public endpoints use:
 
 ---
 
-# 📡 **Starship Endpoints (Admin Only)**
+# 📡 **Starship Endpoints (Admin Only - Excluding GET)**
 
 ### **GET /api/Starship**
 
