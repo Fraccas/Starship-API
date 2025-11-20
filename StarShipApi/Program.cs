@@ -165,6 +165,24 @@ if (app.Environment.IsDevelopment())
     await DbInitializer.InitializeAsync(context, swapi);
 }
 
+// ------------------------------------------------------------------------
+// PRODUCTION: auto-run migrations and seed SQLite
+// ------------------------------------------------------------------------
+if (app.Environment.IsProduction())
+{
+    Console.WriteLine("Running production migrations and seed...");
+
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var swapi = scope.ServiceProvider.GetRequiredService<ISwapiService>();
+
+    context.Database.Migrate();
+    await DbInitializer.InitializeAsync(context, swapi);
+
+    Console.WriteLine("Production seed complete.");
+}
+
+
 
 // ------------------------------------------------------------------------
 // PIPELINE
