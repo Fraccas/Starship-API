@@ -246,6 +246,24 @@ These tests verify **EF Core behavior, CRUD logic, filtering, and DB state chang
 
 ---
 
+# 🔄 **CI/CD Workflows**
+
+Two GitHub Actions pipelines keep the project healthy and ready to ship:
+
+* **.NET Build & Test (`.github/workflows/dotnet.yml`)** runs on every push and pull request to `main` to validate restores, builds, and tests.
+* **Deploy API (`.github/workflows/deploy.yml`)** runs on pushes to `main` (and via manual dispatch) to produce a release-ready artifact.
+
+## Deploy workflow overview
+
+The deploy workflow performs a release build, executes the full test suite, publishes the application, and uploads a compressed artifact for downstream deployment steps.
+
+1. **Restore → Build → Test** using .NET 8 in Release mode.
+2. **Publish** `StarShipApi/StarShipApi.csproj` to a `published/` directory.
+3. **Archive & Upload** the publish output as `StarShipApi-release.tar.gz` for deployment.
+
+---
+
+
 # 🧠 **How EF InMemory Works (Short Explanation)**
 
 * Each test uses:
