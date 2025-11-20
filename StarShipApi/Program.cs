@@ -9,46 +9,62 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var jwtSettings = builder.Configuration.GetSection("Jwt");
-var keyString = jwtSettings["Key"]
-    ?? throw new Exception("JWT Key is missing in configuration");
+// Log environment to confirm during Docker runs
+Console.WriteLine("ASPNETCORE_ENVIRONMENT = " + builder.Environment.EnvironmentName);
 
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var keyString = jwtSettings["Key"] ?? throw new Exception("JWT Key is missing");
 var key = Encoding.UTF8.GetBytes(keyString);
 
-
-// Add DbContext
-builder.Services.AddDbContext<AppDbContext>(options =>
+// ------------------------------------------------------------------------
+// DATABASE CONFIG
+// ------------------------------------------------------------------------
+if (builder.Environment.IsProduction())
 {
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+    // Docker → SQLite
+    builder.Services.AddDbContext<AppDbContext>(options =>
+    {
+        options.UseSqlite("Data Source=starships.db");
+    });
+}
+else
+{
+    // Local development → SQL Server LocalDB
+    builder.Services.AddDbContext<AppDbContext>(options =>
+    {
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    });
+}
 
-// enable https
+// ------------------------------------------------------------------------
+// KESTREL CONFIG (Docker must listen on 8080 only)
+// ------------------------------------------------------------------------
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(5233); // HTTP
-    options.ListenAnyIP(7233, listen => listen.UseHttps()); // HTTPS
+    options.ListenAnyIP(8080); // DO NOT enable HTTPS inside Docker
 });
 
-// enable CORS
+// ------------------------------------------------------------------------
+// CORS
+// ------------------------------------------------------------------------
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngular",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:4200")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
-        });
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
 
-
-
+// ------------------------------------------------------------------------
 // Controllers + Swagger
+// ------------------------------------------------------------------------
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c => // allow testing login auth in Swagger
+
+builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
@@ -56,15 +72,14 @@ builder.Services.AddSwaggerGen(c => // allow testing login auth in Swagger
         Version = "v1"
     });
 
-    // Add JWT Bearer support
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Please enter a valid JWT token. Example: Bearer {token}",
+        Description = "Please enter Bearer {token}",
         Name = "Authorization",
         Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        BearerFormat = "JWT",
-        Scheme = "Bearer"
+        Scheme = "Bearer",
+        BearerFormat = "JWT"
     });
 
     c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
@@ -83,16 +98,18 @@ builder.Services.AddSwaggerGen(c => // allow testing login auth in Swagger
     });
 });
 
-
-// External API Service
+// ------------------------------------------------------------------------
+// HTTP Clients & Identity
+// ------------------------------------------------------------------------
 builder.Services.AddHttpClient<ISwapiService, SwapiService>();
 
-// Setup and provide EF DB models for identity (auth, roles, etc.) 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-// Setup JWT
+// ------------------------------------------------------------------------
+// JWT Authentication
+// ------------------------------------------------------------------------
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -108,40 +125,67 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(key)
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ClockSkew = TimeSpan.Zero
     };
 });
 
 var app = builder.Build();
 
-// INIT SEED DATABASE
-using (var scope = app.Services.CreateScope())
+// If --seed is present, perform migrations & seed, then exit
+if (args.Contains("--seed"))
 {
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<AppDbContext>();
-    var swapi = services.GetRequiredService<ISwapiService>();
+    Console.WriteLine("Running seeding...");
 
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var swapi = scope.ServiceProvider.GetRequiredService<ISwapiService>();
+
+    // apply migrations
+    context.Database.Migrate();
+
+    // run custom seeding
+    await DbInitializer.InitializeAsync(context, swapi);
+
+    Console.WriteLine("Seeding finished");
+    return;
+}
+
+
+// ------------------------------------------------------------------------
+// Local development only: auto-seed + migrations on startup
+// ------------------------------------------------------------------------
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var swapi = scope.ServiceProvider.GetRequiredService<ISwapiService>();
+
+    context.Database.Migrate();
     await DbInitializer.InitializeAsync(context, swapi);
 }
 
 
-app.UseSwagger();
-app.UseSwaggerUI();
-
-app.MapControllers();
+// ------------------------------------------------------------------------
+// PIPELINE
+// ------------------------------------------------------------------------
 app.UseCors("AllowAngular");
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseHttpsRedirection();
 
-
-// test endpoint to make sure it works
-app.MapGet("/test-swapi", async (ISwapiService swapi) =>
+// DO NOT USE HTTPS REDIRECTION in DOCKER
+if (!app.Environment.IsProduction())
 {
-    var ships = await swapi.GetStarshipsAsync();
-    return Results.Ok(ships);
-});
+    app.UseHttpsRedirection();
+}
 
+app.MapControllers();
 
 app.Run();
