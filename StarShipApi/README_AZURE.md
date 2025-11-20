@@ -199,7 +199,7 @@ Production seed complete.
 Calling the API:
 
 ```
-https://<your-site>.azurewebsites.net/starships
+https://starshipapiapp01.azurewebsites.net/api/starship
 ```
 
 Should return **seeded Starship data**, not `[]`.
