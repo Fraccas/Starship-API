@@ -61,19 +61,58 @@ namespace StarShipApi.Controllers
         // ------------------------------------------------------------
         [HttpPut("{id:int}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateStarship(int id, [FromBody] Starship updated)
+        public async Task<IActionResult> UpdateStarship(int id, [FromBody] StarshipUpdateDto updated)
         {
             var existing = await _context.Starships.FindAsync(id);
             if (existing == null)
                 return NotFound();
 
-            // Update only allowed fields
-            _context.Entry(existing).CurrentValues.SetValues(updated);
+            // Apply only provided fields
+            if (updated.Name != null)
+                existing.Name = updated.Name;
+
+            if (updated.Model != null)
+                existing.Model = updated.Model;
+
+            if (updated.Manufacturer != null)
+                existing.Manufacturer = updated.Manufacturer;
+
+            if (updated.CostInCredits != null)
+                existing.CostInCredits = updated.CostInCredits;
+
+            if (updated.Length != null)
+                existing.Length = updated.Length;
+
+            if (updated.MaxAtmospheringSpeed != null)
+                existing.MaxAtmospheringSpeed = updated.MaxAtmospheringSpeed;
+
+            if (updated.Crew != null)
+                existing.Crew = updated.Crew;
+
+            if (updated.Passengers != null)
+                existing.Passengers = updated.Passengers;
+
+            if (updated.CargoCapacity != null)
+                existing.CargoCapacity = updated.CargoCapacity;
+
+            if (updated.Consumables != null)
+                existing.Consumables = updated.Consumables;
+
+            if (updated.HyperdriveRating != null)
+                existing.HyperdriveRating = updated.HyperdriveRating;
+
+            if (updated.MGLT != null)
+                existing.MGLT = updated.MGLT;
+
+            if (updated.StarshipClass != null)
+                existing.StarshipClass = updated.StarshipClass;
 
             await _context.SaveChangesAsync();
 
             return Ok(existing);
         }
+
+
 
         // ------------------------------------------------------------
         // DELETE: api/starship/5 (ADMIN ONLY)

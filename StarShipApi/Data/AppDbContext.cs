@@ -5,7 +5,7 @@ using StarShipApi.Models;
 
 namespace StarShipApi.Data
 {
-    public class AppDbContext : IdentityDbContext<IdentityUser> // instead of DbContext so we can use Auth
+    public class AppDbContext : IdentityDbContext<IdentityUser> // instead of base DbContext so we can use Auth
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
