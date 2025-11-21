@@ -21,6 +21,7 @@ namespace StarShipApi.Controllers
         // ------------------------------------------------------------
         [HttpGet]
         [AllowAnonymous]
+        [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any)]
         public async Task<ActionResult<List<Starship>>> GetStarships()
         {
             return Ok(await _context.Starships.ToListAsync());
@@ -31,6 +32,7 @@ namespace StarShipApi.Controllers
         // ------------------------------------------------------------
         [HttpGet("{id:int}")]
         [AllowAnonymous]
+        [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any)]
         public async Task<ActionResult<Starship>> GetStarship(int id)
         {
             var ship = await _context.Starships.FindAsync(id);

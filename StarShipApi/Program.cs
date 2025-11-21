@@ -152,7 +152,7 @@ if (args.Contains("--seed"))
 // ------------------------------------------------------------------------
 if (app.Environment.IsDevelopment())
 {
-    using var scope = app.Services.CreateScope();
+    using var scope = app.Services.CreateScope(); // scope disposed automatically when block ends
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var swapi = scope.ServiceProvider.GetRequiredService<ISwapiService>();
 
@@ -168,6 +168,8 @@ app.UseCors("AllowAngular");
 app.UseStaticFiles(); // Swagger needs this when running in Docker
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseResponseCaching(); // allow caching for public GET requests
 
 app.UseAuthentication();
 app.UseAuthorization();
