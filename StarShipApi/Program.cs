@@ -57,7 +57,7 @@ builder.Services.AddCors(options =>
 // Controllers + Swagger
 // ------------------------------------------------------------------------
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddEndpointsApiExplorer(); // Swagger gains access to endpoints
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -159,25 +159,6 @@ if (app.Environment.IsDevelopment())
     context.Database.Migrate();
     await DbInitializer.InitializeAsync(context, swapi);
 }
-
-// ------------------------------------------------------------------------
-// PRODUCTION: auto-run migrations and seed SQLite
-// ------------------------------------------------------------------------
-if (app.Environment.IsProduction())
-{
-    Console.WriteLine("Running production migrations and seed...");
-
-    using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var swapi = scope.ServiceProvider.GetRequiredService<ISwapiService>();
-
-    context.Database.Migrate();
-    await DbInitializer.InitializeAsync(context, swapi);
-
-    Console.WriteLine("Production seed complete.");
-}
-
-
 
 // ------------------------------------------------------------------------
 // PIPELINE
