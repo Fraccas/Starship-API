@@ -86,11 +86,11 @@ namespace StarShipApi.Controllers
             if (!await _userManager.CheckPasswordAsync(user, model.Password))
                 return Unauthorized();
 
-            var token = GenerateJwt(user);
+            var token = await GenerateJwtAsync(user);
             return Ok(new { token });
         }
 
-        private string GenerateJwt(IdentityUser user)
+        private async Task<string> GenerateJwtAsync(IdentityUser user)
         {
             var jwtSection = _config.GetSection("Jwt");
 
@@ -103,10 +103,10 @@ namespace StarShipApi.Controllers
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            // Safe: never null, enforced by your registration validation
             var email = user.Email ?? throw new InvalidOperationException("User email missing.");
 
-            var userRoles = _userManager.GetRolesAsync(user).Result;
+            // FIXED — Use await, no blocking
+            var userRoles = await _userManager.GetRolesAsync(user);
 
             var claims = new List<Claim>
             {
