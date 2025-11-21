@@ -11,7 +11,7 @@ using StarShipApi.Data;
 namespace StarShipApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251119235117_InitialCreate")]
+    [Migration("20251121021939_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

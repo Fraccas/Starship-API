@@ -19,22 +19,13 @@ var key = Encoding.UTF8.GetBytes(keyString);
 // ------------------------------------------------------------------------
 // DATABASE CONFIG
 // ------------------------------------------------------------------------
-if (builder.Environment.IsProduction())
+// Docker → SQLite
+builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    // Docker → SQLite
-    builder.Services.AddDbContext<AppDbContext>(options =>
-    {
-        options.UseSqlite("Data Source=starships.db");
-    });
-}
-else
-{
-    // Local development → SQL Server LocalDB
-    builder.Services.AddDbContext<AppDbContext>(options =>
-    {
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-    });
-}
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+
 
 // ------------------------------------------------------------------------
 // KESTREL CONFIG (Docker must listen on 8080 only)
@@ -193,20 +184,12 @@ if (app.Environment.IsProduction())
 // ------------------------------------------------------------------------
 app.UseCors("AllowAngular");
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseStaticFiles(); // Swagger needs this when running in Docker
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-// DO NOT USE HTTPS REDIRECTION in DOCKER
-if (!app.Environment.IsProduction())
-{
-    app.UseHttpsRedirection();
-}
 
 app.MapControllers();
 

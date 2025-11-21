@@ -5,7 +5,7 @@ This document explains how to run the **StarShipApi** backend inside Docker, see
 The backend uses:
 
 * **ASP.NET Core 8**
-* **SQLite** (when running inside Docker)
+* **SQLite** (easy to setup with Docker)
 * **Entity Framework Core**
 * **Docker multi-stage build**
 * **OpenAI Integration**
