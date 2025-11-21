@@ -21,18 +21,18 @@ This API is built as part of a full-stack Star Wars–themed demonstration proje
 StarShipApi/
 │
 ├── Controllers/
+|   ├── AiController.cs
 │   ├── AuthController.cs
 │   ├── StarshipController.cs
 │   └── FavoriteStarshipController.cs
 │
 ├── Data/
 │   ├── AppDbContext.cs
+│
+├── Models/
 │   ├── Starship.cs
 │   ├── FavoriteStarship.cs
-│   └── ApplicationUser.cs (optional depending on setup)
 │
-│
-├── Migrations/
 │
 ├── Program.cs
 ├── appsettings.json
@@ -49,6 +49,7 @@ StarShipApi/
 * **JWT Bearer Authentication**
 * **Swagger (Swashbuckle)**
 * **SQL Server / LocalDB**
+* **SQLite / Azure**
 * **xUnit + EF InMemory** for Unit Testing
 
 ---
@@ -148,7 +149,7 @@ And public endpoints use:
 
 ---
 
-# 📡 **Starship Endpoints (Admin Only)**
+# 📡 **Starship Endpoints (Admin Only - Excluding GET)**
 
 ### **GET /api/Starship**
 
@@ -200,7 +201,7 @@ dotnet run
 
 Visit:
 
-### 🔗 [http://localhost:5132/swagger](http://localhost:5132/swagger)
+### 🔗 [http://localhost:8080/swagger](http://localhost:8000/swagger)
 
 You will see the **Authorize 🔒 button** in the top right.
 
