@@ -215,9 +215,6 @@ Because the API depends on the `"User"` role during registration, you **must see
 
 https://starshipapiapp01.azurewebsites.net/api/auth/seed-admin
 
-sql
-Copy code
-
 This endpoint will:
 
 - Create the **"Admin"** and **"User"** roles (if missing)
@@ -225,9 +222,6 @@ This endpoint will:
 
 Email: admin@test.com
 Password: Password123!
-
-markdown
-Copy code
 
 - Ensure the database contains the necessary `AspNetRoles` entries so that:
 - **Register** works (HTTP 200)
