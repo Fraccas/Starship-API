@@ -92,13 +92,19 @@ namespace StarShipApi.Controllers
 
         private string GenerateJwt(IdentityUser user)
         {
-            var jwtSettings = _config.GetSection("Jwt");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
+            var jwtSection = _config.GetSection("Jwt");
 
-            if (string.IsNullOrEmpty(user.Email))
-                return string.Empty;
+            var secretKey = jwtSection.GetValue<string>("Key")
+                ?? throw new InvalidOperationException("JWT signing key is missing.");
 
+            if (secretKey.Length < 32)
+                throw new InvalidOperationException("JWT signing key must be at least 32 characters long.");
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            // Safe: never null, enforced by your registration validation
+            var email = user.Email ?? throw new InvalidOperationException("User email missing.");
 
             var userRoles = _userManager.GetRolesAsync(user).Result;
 
@@ -106,25 +112,28 @@ namespace StarShipApi.Controllers
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id),
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Email, user.Email)
+                new Claim(ClaimTypes.Email, email)
             };
 
             foreach (var role in userRoles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
-                claims.Add(new Claim("role", role)); // ensure normalized role is sent
+                claims.Add(new Claim("role", role));
             }
 
+            var expiresMinutes = jwtSection.GetValue<double>("ExpireMinutes");
+
             var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
+                issuer: jwtSection["Issuer"],
+                audience: jwtSection["Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["ExpireMinutes"])),
+                expires: DateTime.UtcNow.AddMinutes(expiresMinutes),
                 signingCredentials: creds
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
 
         // GET api/auth/seed-admin
         [HttpGet("seed-admin")]
